@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新闻稿智能评审系统</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  /* ========== Reset & Base ========== */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #FFFFFF;
+    --bg-secondary: #F2EEED;
+    --text-primary: #1D1D1B;
+    --text-secondary: #63605B;
+    --text-muted: #9B9691;
+    --accent: #E3120B;
+    --accent-dark: #C10E09;
+    --accent-light: rgba(227, 18, 11, 0.08);
+    --data: #0D7680;
+    --data-light: rgba(13, 118, 128, 0.08);
+    --warn: #E3120B;
+    --warn-light: rgba(227, 18, 11, 0.08);
+    --rule: #D7D2CB;
+    --bar-bg: #E8E3DE;
+    --white: #FFFFFF;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ========== Tabular Numbers ========== */
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+    letter-spacing: -0.02em;
+  }
+
+  /* ========== Serif Title Font ========== */
+  .serif {
+    font-family: Georgia, "Noto Serif SC", "Times New Roman", "Songti SC", serif;
+  }
+
+  /* ========== Section Label (Economist style) ========== */
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  /* ========== Top Nav (Economist red bar) ========== */
+  .topnav {
+    background: #E3120B;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 32px;
+    border-bottom: 1px solid #C10E09;
+  }
+  .topnav-inner {
+    max-width: 960px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .topnav-title {
+    color: #FFFFFF;
+    font-family: Georgia, "Noto Serif SC", "Times New Roman", serif;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+  }
+  .topnav-badge {
+    position: absolute;
+    right: 0;
+    font-size: 10px;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.5px;
+  }
+
+  /* ========== Container ========== */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px 48px;
+  }
+
+  /* ========== Input Section ========== */
+  .input-section {
+    padding: 32px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .input-label {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .input-label .section-label {
+    position: relative;
+  }
+  .input-label .input-hint {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 180px;
+    padding: 16px 20px;
+    border: 1px solid var(--rule);
+    border-radius: 0;
+    background: var(--white);
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text-primary);
+    resize: vertical;
+    transition: border-color 0.2s ease;
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: var(--data);
+  }
+  textarea::placeholder {
+    color: #C0BBB5;
+  }
+
+  .btn-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 16px;
+    margin-top: 14px;
+  }
+  .char-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 28px;
+    background: var(--accent);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 0;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    letter-spacing: 0.3px;
+  }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-primary:active { background: #A00B07; }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-primary .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ========== Error Banner ========== */
+  .error-banner {
+    display: none;
+    padding: 12px 20px;
+    border-left: 3px solid var(--warn);
+    background: var(--warn-light);
+    color: var(--warn);
+    font-size: 13px;
+    margin: 16px 0 0;
+    align-items: center;
+    gap: 8px;
+  }
+  .error-banner.visible {
+    display: flex;
+  }
+
+  /* ========== Loading Overlay ========== */
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.92);
+    z-index: 100;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .loading-overlay.visible { display: flex; }
+  .loading-ring {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--rule);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+  .loading-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  .loading-subtext {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ========== Result Section ========== */
+  .result-section {
+    display: none;
+  }
+  .result-section.visible {
+    display: block;
+    animation: fadeIn 0.5s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* ========== Score + Radar Row ========== */
+  .top-row {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 0;
+    padding: 32px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* -- Score Panel -- */
+  .score-panel {
+    padding: 16px 40px 16px 0;
+    border-right: 1px solid var(--rule);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  .score-panel .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .score-big {
+    font-size: 96px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-primary);
+    font-family: -apple-system, "SF Pro Display", "Helvetica Neue", sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+  .score-big .out-of {
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-left: 2px;
+  }
+
+  .score-grade {
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 2px;
+  }
+  .score-grade i { width: 13px; height: 13px; }
+  .grade-excellent { background: var(--data-light); color: var(--data); }
+  .grade-good { background: var(--data-light); color: var(--data); }
+  .grade-average { background: var(--warn-light); color: var(--warn); }
+  .grade-poor { background: var(--warn-light); color: var(--warn); }
+
+  /* -- Spectrum Bar -- */
+  .spectrum-wrap {
+    width: 100%;
+    margin-top: 24px;
+  }
+  .spectrum-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+  }
+  .spectrum-bar {
+    position: relative;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #E3120B 0%, #D4A843 45%, #0D7680 100%);
+  }
+  .spectrum-marker {
+    position: absolute;
+    top: -6px;
+    width: 2px;
+    height: 16px;
+    background: var(--text-primary);
+    border-radius: 1px;
+    left: 0%;
+    transform: translateX(-50%);
+    transition: left 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .spectrum-marker::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 3px solid var(--text-primary);
+  }
+
+  /* -- Radar Panel -- */
+  .radar-panel {
+    padding: 16px 0 16px 40px;
+    display: flex;
+    flex-direction: column;
+  }
+  .radar-panel .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .radar-panel .panel-header i { width: 14px; height: 14px; color: var(--text-muted); }
+  .radar-canvas-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
+  }
+
+  /* ========== Dimensions Table ========== */
+  .dimensions-section {
+    padding: 28px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .dimensions-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .dimensions-header i { width: 14px; height: 14px; color: var(--text-muted); }
+
+  .dim-table { width: 100%; }
+
+  .dim-row {
+    display: grid;
+    grid-template-columns: 140px 56px 1fr 1fr;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+    gap: 20px;
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  .dim-row:last-child { border-bottom: none; }
+  .dim-row.animate-in {
+    animation: rowFadeIn 0.4s ease forwards;
+  }
+  @keyframes rowFadeIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .dim-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dim-name i { width: 14px; height: 14px; color: var(--text-muted); }
+
+  .dim-score {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+    text-align: right;
+    font-family: -apple-system, "SF Pro Display", "Helvetica Neue", sans-serif;
+  }
+
+  .dim-bar-wrap {
+    height: 4px;
+    background: var(--bar-bg);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .dim-bar {
+    height: 100%;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .dim-bar.color-high { background: var(--data); }
+  .dim-bar.color-low { background: var(--warn); }
+
+  .dim-comment {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* ========== Suggestions ========== */
+  .suggestions-section {
+    padding: 28px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .suggestions-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .suggestions-header i { width: 14px; height: 14px; color: var(--text-muted); }
+
+  .suggestion-item {
+    padding: 16px 0 16px 16px;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    gap: 14px;
+    position: relative;
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 0 2px 2px 0;
+  }
+  .suggestion-item.animate-in {
+    animation: slideFadeIn 0.4s ease forwards;
+  }
+  @keyframes slideFadeIn {
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .suggestion-num {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    background: var(--accent);
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin-top: 2px;
+  }
+  .suggestion-body { flex: 1; }
+  .suggestion-tag {
+    display: inline-block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    background: var(--bg-secondary);
+    padding: 2px 8px;
+    border-radius: 2px;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .suggestion-text {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.75;
+  }
+  .suggestion-text em {
+    font-style: normal;
+    background: var(--data-light);
+    padding: 1px 4px;
+    border-radius: 2px;
+    color: var(--data);
+    font-weight: 500;
+  }
+
+  /* ========== Footer ========== */
+  .footer {
+    text-align: center;
+    padding: 24px 0 16px;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+  }
+
+  /* ========== Responsive ========== */
+  @media (max-width: 768px) {
+    .topnav-badge { display: none; }
+    .top-row {
+      grid-template-columns: 1fr;
+    }
+    .score-panel {
+      border-right: none;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .radar-panel {
+      padding: 24px 0 16px;
+    }
+    .dim-row {
+      grid-template-columns: 120px 48px 1fr;
+    }
+    .dim-comment { display: none; }
+    .score-big { font-size: 72px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Top Navigation (Economist red bar) ===== -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <span class="topnav-title">新闻稿智能评审系统</span>
+    <span class="topnav-badge">AI Powered &middot; DeepSeek V3</span>
+  </div>
+</nav>
+
+<!-- ===== Main Container ===== -->
+<div class="container">
+
+  <!-- Input Section -->
+  <section class="input-section">
+    <div class="input-label">
+      <span class="section-label">ARTICLE INPUT</span>
+      <span class="input-hint">粘贴新闻稿全文，支持任意长度</span>
+    </div>
+    <textarea id="articleInput" placeholder="在此粘贴待评审的新闻稿内容..."></textarea>
+    <div class="btn-row">
+      <span class="char-count" id="charCount">0 字</span>
+      <button class="btn-primary" id="analyzeBtn" onclick="startAnalysis()">开始评审</button>
+    </div>
+    <!-- Error Banner -->
+    <div class="error-banner" id="errorBanner">
+      <i data-lucide="alert-circle" style="width:14px;height:14px;flex-shrink:0;"></i>
+      <span id="errorText"></span>
+    </div>
+  </section>
+
+  <!-- Result Section -->
+  <section class="result-section" id="resultSection">
+
+    <!-- Score + Radar Row -->
+    <div class="top-row">
+
+      <!-- Score Panel -->
+      <div class="score-panel">
+        <div class="label">COMPOSITE SCORE</div>
+        <div class="score-big num"><span id="totalScore">0</span><span class="out-of"> / 100</span></div>
+        <div class="score-grade" id="scoreTier"></div>
+        <div class="spectrum-wrap">
+          <div class="spectrum-labels">
+            <span>0 待改进</span>
+            <span>60</span>
+            <span>80</span>
+            <span>100 优秀</span>
+          </div>
+          <div class="spectrum-bar">
+            <div class="spectrum-marker" id="spectrumMarker"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Radar Panel -->
+      <div class="radar-panel">
+        <div class="panel-header">
+          <i data-lucide="radar"></i>
+          <span class="section-label">MULTI-DIMENSION ANALYSIS</span>
+        </div>
+        <div class="radar-canvas-wrap">
+          <canvas id="radarChart" style="max-width:340px;max-height:340px;"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Dimensions Table -->
+    <div class="dimensions-section">
+      <div class="dimensions-header">
+        <i data-lucide="bar-chart-3"></i>
+        <span class="section-label">DIMENSION BREAKDOWN</span>
+      </div>
+      <div class="dim-table" id="dimTable"></div>
+    </div>
+
+    <!-- Suggestions -->
+    <div class="suggestions-section">
+      <div class="suggestions-header">
+        <i data-lucide="pen-line"></i>
+        <span class="section-label">EDITORIAL SUGGESTIONS</span>
+      </div>
+      <div id="suggestionsContainer"></div>
+    </div>
+
+  </section>
+
+  <!-- Footer -->
+  <div class="footer">
+    Powered by DeepSeek V3 &middot; 新闻稿智能评审系统
+  </div>
+
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-ring"></div>
+  <div class="loading-text">AI 正在评审中</div>
+  <div class="loading-subtext">通常需要 10-20 秒，请稍候</div>
+</div>
+
+<script>
+// ===== DOM References =====
+const articleInput = document.getElementById('articleInput');
+const charCount = document.getElementById('charCount');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const resultSection = document.getElementById('resultSection');
+const errorBanner = document.getElementById('errorBanner');
+const errorText = document.getElementById('errorText');
+const loadingOverlay = document.getElementById('loadingOverlay');
+const totalScoreEl = document.getElementById('totalScore');
+const scoreTierEl = document.getElementById('scoreTier');
+const spectrumMarker = document.getElementById('spectrumMarker');
+
+let radarChart = null;
+
+// Initialize Lucide icons
+lucide.createIcons();
+
+// ===== Dimension config =====
+const DIMS = [
+  { key: 'objectivity', name: '客观性', icon: 'scale' },
+  { key: 'density', name: '信息密度', icon: 'layers' },
+  { key: 'readability', name: '可读性', icon: 'book-open' },
+  { key: 'headline', name: '标题吸引力', icon: 'sparkles' },
+  { key: 'structure', name: '结构完整度', icon: 'git-branch' },
+];
+
+// ===== Suggestion category detection =====
+function detectSuggestionTag(text) {
+  if (/标题/.test(text)) return '标题优化';
+  if (/信源|据了解|据悉/.test(text)) return '信源规范';
+  if (/结尾|结束|闭环/.test(text)) return '结尾完善';
+  if (/数据|数字/.test(text)) return '数据补充';
+  if (/段落|结构/.test(text)) return '结构调整';
+  return '内容优化';
+}
+
+// ===== Highlight keywords in suggestion text =====
+function highlightKeywords(text) {
+  // Highlight Chinese quoted content
+  return text.replace(/「([^」]+)」/g, '<em>「$1」</em>');
+}
+
+// ===== Character count =====
+articleInput.addEventListener('input', () => {
+  charCount.textContent = `${articleInput.value.length} 字`;
+});
+
+// ===== Show/Hide helpers =====
+function showError(msg) {
+  errorText.textContent = msg;
+  errorBanner.classList.add('visible');
+  setTimeout(() => errorBanner.classList.remove('visible'), 6000);
+}
+
+function setLoading(on) {
+  loadingOverlay.classList.toggle('visible', on);
+  analyzeBtn.disabled = on;
+  if (on) {
+    analyzeBtn.innerHTML = '<div class="spinner"></div> 评审中...';
+  } else {
+    analyzeBtn.textContent = '开始评审';
+  }
+}
+
+// ===== Animate number from 0 to target (easeOutExpo) =====
+function animateNumber(el, target, duration = 1200) {
+  const start = performance.now();
+  function tick(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+    el.textContent = Math.round(target * eased);
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// ===== Score tier =====
+function getScoreTier(score) {
+  if (score >= 85) return { text: '优秀', cls: 'grade-excellent', icon: 'award' };
+  if (score >= 70) return { text: '良好', cls: 'grade-good', icon: 'thumbs-up' };
+  if (score >= 55) return { text: '一般', cls: 'grade-average', icon: 'minus' };
+  return { text: '待改进', cls: 'grade-poor', icon: 'alert-triangle' };
+}
+
+// ===== Render radar chart =====
+function renderRadar(scores, animate = true) {
+  const ctx = document.getElementById('radarChart').getContext('2d');
+
+  if (radarChart) radarChart.destroy();
+
+  const initialData = animate ? [0, 0, 0, 0, 0] : scores;
+
+  radarChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: DIMS.map(d => d.name),
+      datasets: [{
+        label: '评分',
+        data: initialData,
+        backgroundColor: 'rgba(13, 118, 128, 0.1)',
+        borderColor: '#0D7680',
+        borderWidth: 2,
+        pointBackgroundColor: '#0D7680',
+        pointBorderColor: '#0D7680',
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBorderWidth: 2,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      animation: { duration: animate ? 0 : 600 },
+      scales: {
+        r: {
+          beginAtZero: true,
+          min: 0,
+          max: 100,
+          ticks: {
+            stepSize: 20,
+            font: { size: 10 },
+            color: '#9B9691',
+            backdropColor: 'transparent',
+          },
+          grid: { color: '#D7D2CB', lineWidth: 1 },
+          angleLines: { color: '#D7D2CB', lineWidth: 1 },
+          pointLabels: {
+            font: {
+              size: 12,
+              weight: '500',
+              family: 'Georgia, "Noto Serif SC", "Times New Roman", serif'
+            },
+            color: '#1D1D1B',
+            padding: 16,
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1D1D1B',
+          titleFont: { size: 12 },
+          bodyFont: { size: 12 },
+          cornerRadius: 2,
+          padding: 8,
+          callbacks: {
+            label: (ctx) => ` ${ctx.raw} 分`
+          }
+        }
+      }
+    }
+  });
+
+  if (animate) {
+    const duration = 1200;
+    const startTime = performance.now();
+    function animateRadar(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      radarChart.data.datasets[0].data = scores.map(s => Math.round(s * eased));
+      radarChart.update('none');
+      if (progress < 1) requestAnimationFrame(animateRadar);
+    }
+    setTimeout(() => requestAnimationFrame(animateRadar), 200);
+  }
+}
+
+// ===== Render dimension rows =====
+function renderDimensions(data) {
+  const container = document.getElementById('dimTable');
+  container.innerHTML = '';
+
+  // Find the lowest score dimension
+  const scores = DIMS.map(d => data[d.key].score);
+  const minScore = Math.min(...scores);
+
+  DIMS.forEach((dim, i) => {
+    const score = data[dim.key].score;
+    const comment = data[dim.key].comment;
+    const isLowest = score === minScore;
+    const colorClass = isLowest ? 'color-low' : 'color-high';
+
+    const row = document.createElement('div');
+    row.className = 'dim-row';
+    row.innerHTML = `
+      <div class="dim-name"><i data-lucide="${dim.icon}"></i> ${dim.name}</div>
+      <div class="dim-score num" id="dimScore_${dim.key}">0</div>
+      <div class="dim-bar-wrap"><div class="dim-bar ${colorClass}" id="dimBar_${dim.key}"></div></div>
+      <div class="dim-comment">${comment}</div>
+    `;
+    container.appendChild(row);
+
+    // Stagger animation
+    setTimeout(() => {
+      row.classList.add('animate-in');
+      lucide.createIcons({ nodes: [row] });
+
+      // Animate score number
+      const scoreEl = document.getElementById(`dimScore_${dim.key}`);
+      animateNumber(scoreEl, score, 1000);
+
+      // Animate bar width
+      setTimeout(() => {
+        document.getElementById(`dimBar_${dim.key}`).style.width = score + '%';
+      }, 100);
+    }, i * 120);
+  });
+}
+
+// ===== Render suggestions =====
+function renderSuggestions(suggestions) {
+  const container = document.getElementById('suggestionsContainer');
+  container.innerHTML = '';
+
+  suggestions.forEach((text, i) => {
+    const tag = detectSuggestionTag(text);
+    const highlighted = highlightKeywords(text);
+
+    const item = document.createElement('div');
+    item.className = 'suggestion-item';
+    item.innerHTML = `
+      <div class="suggestion-num">${i + 1}</div>
+      <div class="suggestion-body">
+        <div class="suggestion-tag">${tag}</div>
+        <div class="suggestion-text">${highlighted}</div>
+      </div>
+    `;
+    container.appendChild(item);
+
+    setTimeout(() => item.classList.add('animate-in'), 800 + i * 200);
+  });
+}
+
+// ===== Render all results =====
+function renderResults(data) {
+  const dims = DIMS.map(d => d.key);
+  const scores = dims.map(d => data[d].score);
+  const total = Math.round(scores.reduce((a, b) => a + b, 0) / 5);
+
+  // Show result section
+  resultSection.classList.add('visible');
+  setTimeout(() => resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+
+  // Animate total score
+  animateNumber(totalScoreEl, total, 1400);
+
+  // Set tier badge
+  const tier = getScoreTier(total);
+  scoreTierEl.innerHTML = `<i data-lucide="${tier.icon}"></i> ${tier.text}`;
+  scoreTierEl.className = 'score-grade ' + tier.cls;
+  lucide.createIcons({ nodes: [scoreTierEl] });
+
+  // Animate spectrum marker
+  setTimeout(() => {
+    spectrumMarker.style.left = total + '%';
+  }, 200);
+
+  // Render radar chart
+  renderRadar(scores, true);
+
+  // Render dimension rows
+  renderDimensions(data);
+
+  // Render suggestions
+  renderSuggestions(data.suggestions || []);
+}
+
+// ===== Main: Start Analysis =====
+async function startAnalysis() {
+  const article = articleInput.value.trim();
+
+  if (!article) {
+    showError('请先粘贴新闻稿内容');
+    articleInput.focus();
+    return;
+  }
+  if (article.length < 20) {
+    showError('新闻稿内容过短，请至少输入20个字符');
+    articleInput.focus();
+    return;
+  }
+
+  errorBanner.classList.remove('visible');
+  setLoading(true);
+  resultSection.classList.remove('visible');
+
+  try {
+    const resp = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ article }),
+    });
+
+    const json = await resp.json();
+
+    if (!resp.ok || json.error) {
+      throw new Error(json.error || '请求失败，请重试');
+    }
+
+    const data = json.data;
+
+    // Validate data structure
+    for (const dim of DIMS) {
+      if (!data[dim.key] || typeof data[dim.key].score !== 'number') {
+        throw new Error('AI返回的数据结构不完整，请重试');
+      }
+    }
+
+    renderResults(data);
+
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ===== Auto-trigger demo if URL has #demo =====
+if (window.location.hash === '#demo') {
+  window.addEventListener('load', () => setTimeout(loadDemo, 300));
+}
+
+// ===== Demo mode: for testing without API =====
+function loadDemo() {
+  const demoData = {
+    objectivity: { score: 82, comment: '整体客观，个别表述可更中立' },
+    density: { score: 75, comment: '信息量适中，部分段落可精简' },
+    readability: { score: 88, comment: '语言流畅，逻辑清晰易读' },
+    headline: { score: 70, comment: '标题准确但吸引力一般' },
+    structure: { score: 85, comment: '结构完整，过渡自然' },
+    suggestions: [
+      '第二段中「据了解」「据悉」等模糊信源出现3次，建议至少标注1个具名信源以提升可信度。',
+      '标题可考虑加入核心数据或冲突点，例如将「某市推进城市更新」改为「某市投入50亿推进城市更新，首批12个项目落地」。',
+      '结尾段较为仓促，建议增加未来展望或专家点评，形成完整的报道闭环。'
+    ]
+  };
+
+  renderResults(demoData);
+}
+</script>
+
+</body>
+</html>
