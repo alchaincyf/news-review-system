@@ -430,6 +430,64 @@ textarea::placeholder {
   line-height: 1.5;
 }
 
+/* ========== Language Corrections ========== */
+.corrections-section {
+  margin-top: 16px;
+  padding: 16px 20px;
+  background: var(--warn-light);
+  border-left: 3px solid var(--accent);
+}
+.corrections-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.corrections-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.corrections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.correction-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.correction-type {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 2px;
+  border: 1px solid var(--rule);
+}
+.correction-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.correction-original {
+  color: var(--accent);
+  text-decoration: line-through;
+  text-decoration-color: var(--accent);
+}
+.correction-fixed {
+  color: var(--data);
+  font-weight: 500;
+}
+
 /* ========== Suggestions ========== */
 .suggestions-section {
   padding: 28px 0;
@@ -607,7 +665,7 @@ textarea::placeholder {
 }
 .dims-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
 .dim-card {
@@ -705,16 +763,10 @@ textarea::placeholder {
   .dims-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .dim-card:last-child {
-    grid-column: span 2;
-  }
 }
 
 @media (max-width: 480px) {
   .dims-grid {
     grid-template-columns: 1fr;
-  }
-  .dim-card:last-child {
-    grid-column: span 1;
   }
 }

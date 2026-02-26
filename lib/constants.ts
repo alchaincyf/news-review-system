@@ -6,6 +6,7 @@ export const DIMS: DimensionConfig[] = [
   { key: 'readability', name: '可读性', icon: 'BookOpen', description: '语言是否流畅，逻辑是否清晰' },
   { key: 'headline', name: '标题吸引力', icon: 'Sparkles', description: '标题是否准确且有吸引力' },
   { key: 'structure', name: '结构完整度', icon: 'GitBranch', description: '导语、主体、结尾是否完整' },
+  { key: 'language', name: '语言规范', icon: 'SpellCheck', description: '有无错别字、语病或用词不当' },
 ];
 
 export function getScoreTier(score: number): ScoreTier {

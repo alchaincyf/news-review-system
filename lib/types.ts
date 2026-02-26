@@ -3,12 +3,23 @@ export interface DimensionScore {
   comment: string;
 }
 
+export interface LanguageCorrection {
+  original: string;
+  corrected: string;
+  type: string;
+}
+
+export interface LanguageScore extends DimensionScore {
+  corrections?: LanguageCorrection[];
+}
+
 export interface ReviewData {
   objectivity: DimensionScore;
   density: DimensionScore;
   readability: DimensionScore;
   headline: DimensionScore;
   structure: DimensionScore;
+  language: LanguageScore;
   suggestions: string[];
 }
 

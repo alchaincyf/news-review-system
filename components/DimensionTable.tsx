@@ -7,11 +7,13 @@ import {
   BookOpen,
   Sparkles,
   GitBranch,
+  SpellCheck,
   BarChart3,
+  ArrowRight,
 } from 'lucide-react';
 import { DIMS } from '@/lib/constants';
 import { animateNumber } from '@/lib/animations';
-import type { ReviewData } from '@/lib/types';
+import type { ReviewData, LanguageScore } from '@/lib/types';
 
 const DIM_ICONS: Record<string, React.ReactNode> = {
   Scale: <Scale size={14} color="#9B9691" />,
@@ -19,6 +21,7 @@ const DIM_ICONS: Record<string, React.ReactNode> = {
   BookOpen: <BookOpen size={14} color="#9B9691" />,
   Sparkles: <Sparkles size={14} color="#9B9691" />,
   GitBranch: <GitBranch size={14} color="#9B9691" />,
+  SpellCheck: <SpellCheck size={14} color="#9B9691" />,
 };
 
 interface DimensionTableProps {
@@ -76,6 +79,8 @@ function DimensionRow({
 export default function DimensionTable({ data }: DimensionTableProps) {
   const scores = DIMS.map((d) => data[d.key].score);
   const minScore = Math.min(...scores);
+  const languageData = data.language as LanguageScore;
+  const corrections = languageData?.corrections || [];
 
   return (
     <div className="dimensions-section">
@@ -95,6 +100,27 @@ export default function DimensionTable({ data }: DimensionTableProps) {
           />
         ))}
       </div>
+
+      {corrections.length > 0 && (
+        <div className="corrections-section">
+          <div className="corrections-header">
+            <SpellCheck size={14} color="#E3120B" />
+            <span className="corrections-title">发现 {corrections.length} 处语言问题</span>
+          </div>
+          <div className="corrections-list">
+            {corrections.map((c, i) => (
+              <div className="correction-item" key={i}>
+                <span className="correction-type">{c.type}</span>
+                <div className="correction-detail">
+                  <span className="correction-original">{c.original}</span>
+                  <ArrowRight size={12} color="#9B9691" />
+                  <span className="correction-fixed">{c.corrected}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

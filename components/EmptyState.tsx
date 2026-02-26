@@ -9,6 +9,7 @@ import {
   BookOpen,
   Sparkles,
   GitBranch,
+  SpellCheck,
   FileText,
 } from 'lucide-react';
 import { DIMS } from '@/lib/constants';
@@ -19,6 +20,7 @@ const DIM_ICONS: Record<string, React.ReactNode> = {
   BookOpen: <BookOpen size={20} />,
   Sparkles: <Sparkles size={20} />,
   GitBranch: <GitBranch size={20} />,
+  SpellCheck: <SpellCheck size={20} />,
 };
 
 interface EmptyStateProps {
@@ -49,7 +51,7 @@ export default function EmptyState({ onLoadDemo }: EmptyStateProps) {
             </div>
             <div className="step-num">02</div>
             <div className="step-label">AI 智能分析</div>
-            <div className="step-desc">DeepSeek V3 从 5 个维度深度评审</div>
+            <div className="step-desc">DeepSeek V3 从 6 个维度深度评审</div>
           </div>
           <div className="step-connector">
             <div className="connector-line" />

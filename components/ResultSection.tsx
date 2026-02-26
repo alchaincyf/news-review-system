@@ -17,7 +17,7 @@ interface ResultSectionProps {
 export default function ResultSection({ data }: ResultSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const scores = DIMS.map((d) => data[d.key].score);
-  const totalScore = Math.round(scores.reduce((a, b) => a + b, 0) / 5);
+  const totalScore = Math.round(scores.reduce((a, b) => a + b, 0) / DIMS.length);
 
   useEffect(() => {
     setTimeout(() => {
